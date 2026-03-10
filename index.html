@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LinkedIn Sudoku Solver</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Segoe UI,Arial;
+    background:#121212;
+    color:white;
+}
+
+/* HEADER */
+
+header{
+    background:#0a66c2;
+    padding:15px;
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+}
+
+/* MAIN CARD */
+
+.container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:80vh;
+}
+
+.card{
+    background:#1e1e1e;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5);
+    text-align:center;
+}
+
+table{
+    margin:auto;
+    border-collapse:collapse;
+}
+
+td{
+    border:2px solid #333;
+}
+
+input{
+    width:55px;
+    height:55px;
+    font-size:22px;
+    text-align:center;
+    border:none;
+    background:transparent;
+    color:white;
+}
+
+.boxA{background:#1f2a44;}
+.boxB{background:#2b3554;}
+
+button{
+    margin:10px;
+    padding:10px 20px;
+    border:none;
+    border-radius:6px;
+    background:#0a66c2;
+    color:white;
+    font-size:15px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#004182;
+}
+
+/* FOOTER */
+
+footer{
+    text-align:center;
+    padding:15px;
+    background:#181818;
+    color:#bbb;
+    font-size:14px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+LinkedIn Sudoku Solver
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<table id="board"></table>
+
+<br>
+
+<button onclick="solveSudoku()">Solve</button>
+<button onclick="clearBoard()">Clear</button>
+
+</div>
+
+</div>
+
+<footer>
+Built with Backtracking Algorithm | Developed by Animesh Lodhi
+</footer>
+
+<script>
+
+const N = 6;
+const boardElement=document.getElementById("board");
+
+// create grid
+for(let i=0;i<N;i++){
+
+    let row=boardElement.insertRow();
+
+    for(let j=0;j<N;j++){
+
+        let cell=row.insertCell();
+
+        let input=document.createElement("input");
+        input.type="number";
+        input.min=1;
+        input.max=6;
+
+        if((Math.floor(i/2)+Math.floor(j/3))%2==0)
+            input.className="boxA";
+        else
+            input.className="boxB";
+
+        cell.appendChild(input);
+    }
+}
+
+function getBoard(){
+
+    let board=[];
+
+    for(let i=0;i<N;i++){
+
+        board[i]=[];
+
+        for(let j=0;j<N;j++){
+
+            let val=boardElement.rows[i].cells[j].firstChild.value;
+
+            board[i][j]=val==""?0:parseInt(val);
+        }
+    }
+
+    return board;
+}
+
+function setCell(r,c,val){
+    boardElement.rows[r].cells[c].firstChild.value=val;
+}
+
+function clearBoard(){
+
+    for(let i=0;i<N;i++)
+        for(let j=0;j<N;j++)
+            setCell(i,j,"");
+}
+
+function isSafe(board,row,col,val){
+
+    for(let i=0;i<N;i++)
+        if(board[row][i]==val) return false;
+
+    for(let i=0;i<N;i++)
+        if(board[i][col]==val) return false;
+
+    let r1=row-row%2;
+    let c1=col-col%3;
+
+    for(let i=r1;i<r1+2;i++)
+        for(let j=c1;j<c1+3;j++)
+            if(board[i][j]==val) return false;
+
+    return true;
+}
+
+function sleep(ms){
+    return new Promise(r=>setTimeout(r,ms));
+}
+
+async function solver(board,row,col){
+
+    if(row==N) return true;
+
+    let nextRow=row;
+    let nextCol=col+1;
+
+    if(col+1==N){
+        nextRow=row+1;
+        nextCol=0;
+    }
+
+    if(board[row][col]!=0)
+        return solver(board,nextRow,nextCol);
+
+    for(let num=1;num<=6;num++){
+
+        if(isSafe(board,row,col,num)){
+
+            board[row][col]=num;
+            setCell(row,col,num);
+
+            await sleep(20);
+
+            if(await solver(board,nextRow,nextCol))
+                return true;
+
+            board[row][col]=0;
+            setCell(row,col,"");
+        }
+    }
+
+    return false;
+}
+
+async function solveSudoku(){
+
+    let board=getBoard();
+
+    if(!(await solver(board,0,0)))
+        alert("No Solution Found");
+
+}
+
+</script>
+
+</body>
+</html>
