@@ -1,244 +1,454 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LinkedIn Sudoku Solver</title>
 
 <style>
+:root {
+  /* Design Tokens */
+  --bg-primary: #0b0f19;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #1e293b 0%, #0b0f19 60%);
+  --card-bg: rgba(30, 35, 48, 0.85);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent: #0a66c2;
+  --accent-hover: #004182;
+  --accent-glow: rgba(10, 102, 194, 0.35);
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --cell-bg-1: #151b2b;
+  --cell-bg-2: #1e2638;
+  --border-subtle: #2d3748;
+  --border-bold: #4b5563;
+  --radius: 16px;
+  --radius-sm: 8px;
+  --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--card-border);
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --font-stack: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
 
-body{
-    margin:0;
-    font-family:Segoe UI,Arial;
-    background:#121212;
-    color:white;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-stack);
+  background: var(--bg-gradient);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* HEADER */
-
-header{
-    background:#0a66c2;
-    padding:15px;
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
+header {
+  background: linear-gradient(180deg, rgba(10,102,194,0.9) 0%, rgba(8,77,153,0.95) 100%);
+  backdrop-filter: blur(12px);
+  padding: 18px 20px;
+  text-align: center;
+  font-size: clamp(18px, 2.5vw, 22px);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
-/* MAIN CARD */
-
-.container{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:80vh;
+/* MAIN LAYOUT */
+.container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
 }
 
-.card{
-    background:#1e1e1e;
-    padding:30px;
-    border-radius:12px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.5);
-    text-align:center;
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: clamp(20px, 4vw, 32px);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
 }
 
-table{
-    margin:auto;
-    border-collapse:collapse;
+/* STATUS BAR */
+.status-bar {
+  height: 32px;
+  background: rgba(0,0,0,0.2);
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  position: relative;
 }
 
-td{
-    border:2px solid #333;
+.status-bar::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  margin-right: 10px;
+  transition: var(--transition);
 }
 
-input{
-    width:55px;
-    height:55px;
-    font-size:22px;
-    text-align:center;
-    border:none;
-    background:transparent;
-    color:white;
+.status-bar.solving { color: var(--accent); }
+.status-bar.solving::before { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 1s infinite; }
+.status-bar.success { color: var(--success); }
+.status-bar.success::before { background: var(--success); }
+.status-bar.error { color: var(--error); }
+.status-bar.error::before { background: var(--error); }
+
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+
+/* GRID */
+.grid-wrapper {
+  background: rgba(0,0,0,0.25);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  margin: 0 auto;
+  display: inline-block;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
 }
 
-.boxA{background:#1f2a44;}
-.boxB{background:#2b3554;}
-
-button{
-    margin:10px;
-    padding:10px 20px;
-    border:none;
-    border-radius:6px;
-    background:#0a66c2;
-    color:white;
-    font-size:15px;
-    cursor:pointer;
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 0 auto;
 }
 
-button:hover{
-    background:#004182;
+td {
+  position: relative;
+  background: var(--cell-bg-1);
+  transition: background var(--transition);
 }
+
+td:nth-child(even) { background: var(--cell-bg-2); }
+
+/* Region Borders (2x3 Boxes) */
+tr:not(:first-child) td { border-top: 1px solid var(--border-subtle); }
+td:not(:first-child) { border-left: 1px solid var(--border-subtle); }
+tr:nth-child(3) td, tr:nth-child(5) td { border-top: 2.5px solid var(--border-bold); }
+td:nth-child(4) { border-left: 2.5px solid var(--border-bold); }
+
+/* INPUTS */
+input {
+  width: 56px;
+  height: 56px;
+  font-size: clamp(18px, 3vw, 24px);
+  font-weight: 500;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  outline: none;
+  transition: var(--transition);
+  caret-color: var(--accent);
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+input:hover { background: rgba(255,255,255,0.05); }
+input:focus { background: rgba(10,102,194,0.15); box-shadow: inset 0 0 0 2px var(--accent); }
+
+input.user-input { color: #38bdf8; font-weight: 600; }
+input.solved-cell { color: var(--success); font-weight: 600; }
+input.active-step { animation: pop 0.2s ease; color: #fbbf24; background: rgba(251, 191, 36, 0.15); }
+
+@keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+
+/* CONTROLS */
+.controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+button {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+button.primary {
+  background: linear-gradient(135deg, var(--accent) 0%, #0d4a9c 100%);
+  color: white;
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+button.primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px var(--accent-glow); }
+button.primary:active:not(:disabled) { transform: translateY(0); }
+button.primary:disabled { background: #2a3245; color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
+
+button.secondary {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+button.secondary:hover:not(:disabled) { background: rgba(255,255,255,0.12); color: var(--text-primary); border-color: var(--border-bold); }
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; display: none; }
+button.primary.loading .spinner { display: block; }
+button.primary.loading span { display: none; }
 
 /* FOOTER */
-
-footer{
-    text-align:center;
-    padding:15px;
-    background:#181818;
-    color:#bbb;
-    font-size:14px;
+footer {
+  text-align: center;
+  padding: 20px;
+  background: rgba(0,0,0,0.3);
+  color: var(--text-muted);
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  border-top: 1px solid var(--card-border);
 }
 
+/* ACCESSIBILITY & REDUCED MOTION */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+@media (max-width: 480px) {
+  input { width: 44px; height: 44px; font-size: 18px; }
+  .grid-wrapper { padding: 8px; }
+}
+
+/* Focus Visible Polyfill Feel */
+*:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 </style>
 </head>
 
 <body>
 
-<header>
-LinkedIn Sudoku Solver
-</header>
+<header>LinkedIn Sudoku Solver</header>
 
-<div class="container">
+<main class="container">
+  <div class="card">
+    <div class="status-bar" id="status" aria-live="polite">Ready to solve 6×6 puzzle</div>
+    
+    <div class="grid-wrapper">
+      <table id="board" role="grid" aria-label="Sudoku 6x6 Grid"></table>
+    </div>
 
-<div class="card">
-
-<table id="board"></table>
-
-<br>
-
-<button onclick="solveSudoku()">Solve</button>
-<button onclick="clearBoard()">Clear</button>
-
-</div>
-
-</div>
+    <div class="controls">
+      <button id="solveBtn" class="primary" onclick="solveSudoku()" aria-label="Solve the current puzzle">
+        <div class="spinner"></div>
+        <span>Solve Puzzle</span>
+      </button>
+      <button id="clearBtn" class="secondary" onclick="clearBoard()" aria-label="Clear all inputs">Clear Board</button>
+    </div>
+  </div>
+</main>
 
 <footer>
-Built with Backtracking Algorithm | Developed by Animesh Lodhi
+  Built with Backtracking Algorithm &bull; Optimized UI/UX &bull; Developed by Animesh Lodhi
 </footer>
 
 <script>
-
 const N = 6;
-const boardElement=document.getElementById("board");
+const boardElement = document.getElementById("board");
+const statusEl = document.getElementById("status");
+const solveBtn = document.getElementById("solveBtn");
+const clearBtn = document.getElementById("clearBtn");
+let isSolving = false;
 
-// create grid
-for(let i=0;i<N;i++){
+// 🔹 Generate Grid
+for(let i = 0; i < N; i++) {
+  const row = boardElement.insertRow();
+  row.setAttribute("role", "row");
+  for(let j = 0; j < N; j++) {
+    const cell = row.insertCell();
+    cell.setAttribute("role", "gridcell");
+    
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = 1;
+    input.max = 6;
+    input.maxLength = 1;
+    input.dataset.row = i;
+    input.dataset.col = j;
+    input.setAttribute("aria-label", `Row ${i+1}, Column ${j+1}`);
+    
+    // Region Borders via inline styles for precision
+    if(i === 2 || i === 4) cell.style.borderTop = "2.5px solid var(--border-bold)";
+    if(j === 3) cell.style.borderLeft = "2.5px solid var(--border-bold)";
 
-    let row=boardElement.insertRow();
+    cell.appendChild(input);
 
-    for(let j=0;j<N;j++){
+    // 🔹 Input Validation & UX
+    input.addEventListener("input", (e) => {
+      const val = e.target.value;
+      e.target.value = val.length > 1 ? val.slice(-1) : val;
+      const num = parseInt(e.target.value);
+      
+      if(isNaN(num) || num < 1 || num > 6) {
+        e.target.value = "";
+        e.target.classList.remove("user-input");
+      } else {
+        e.target.classList.add("user-input");
+        e.target.classList.remove("solved-cell");
+      }
+      updateStatus("Ready");
+    });
 
-        let cell=row.insertCell();
+    input.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") solveSudoku();
+    });
+  }
+}
 
-        let input=document.createElement("input");
-        input.type="number";
-        input.min=1;
-        input.max=6;
-
-        if((Math.floor(i/2)+Math.floor(j/3))%2==0)
-            input.className="boxA";
-        else
-            input.className="boxB";
-
-        cell.appendChild(input);
+// 🔹 Helpers
+function getBoard() {
+  const board = [];
+  for(let i = 0; i < N; i++) {
+    board[i] = [];
+    for(let j = 0; j < N; j++) {
+      const val = boardElement.rows[i].cells[j].firstChild.value;
+      board[i][j] = val === "" ? 0 : parseInt(val);
     }
+  }
+  return board;
 }
 
-function getBoard(){
+function setCell(r, c, val, isSolvingStep = false) {
+  const input = boardElement.rows[r].cells[c].firstChild;
+  input.value = val || "";
+  input.classList.toggle("active-step", isSolvingStep && val);
+  if(isSolvingStep && !boardElement.rows[r].cells[c].firstChild.classList.contains("user-input")) {
+    input.classList.add("solved-cell");
+  }
+}
 
-    let board=[];
-
-    for(let i=0;i<N;i++){
-
-        board[i]=[];
-
-        for(let j=0;j<N;j++){
-
-            let val=boardElement.rows[i].cells[j].firstChild.value;
-
-            board[i][j]=val==""?0:parseInt(val);
-        }
+function clearBoard() {
+  if(isSolving) return;
+  for(let i = 0; i < N; i++) {
+    for(let j = 0; j < N; j++) {
+      const input = boardElement.rows[i].cells[j].firstChild;
+      input.value = "";
+      input.classList.remove("user-input", "solved-cell", "active-step");
     }
-
-    return board;
+  }
+  updateStatus("Ready to solve 6×6 puzzle");
+  toggleLoading(false);
 }
 
-function setCell(r,c,val){
-    boardElement.rows[r].cells[c].firstChild.value=val;
+function updateStatus(msg, type = "") {
+  statusEl.textContent = msg;
+  statusEl.className = "status-bar" + (type ? ` ${type}` : "");
 }
 
-function clearBoard(){
-
-    for(let i=0;i<N;i++)
-        for(let j=0;j<N;j++)
-            setCell(i,j,"");
+function toggleLoading(state) {
+  isSolving = state;
+  solveBtn.classList.toggle("loading", state);
+  solveBtn.disabled = state;
+  clearBtn.disabled = state;
+  boardElement.querySelectorAll("input").forEach(inp => inp.disabled = state);
 }
 
-function isSafe(board,row,col,val){
-
-    for(let i=0;i<N;i++)
-        if(board[row][i]==val) return false;
-
-    for(let i=0;i<N;i++)
-        if(board[i][col]==val) return false;
-
-    let r1=row-row%2;
-    let c1=col-col%3;
-
-    for(let i=r1;i<r1+2;i++)
-        for(let j=c1;j<c1+3;j++)
-            if(board[i][j]==val) return false;
-
-    return true;
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function sleep(ms){
-    return new Promise(r=>setTimeout(r,ms));
-}
+// 🔹 Core Solver
+function isSafe(board, row, col, val) {
+  for(let i = 0; i < N; i++) if(board[row][i] === val) return false;
+  for(let i = 0; i < N; i++) if(board[i][col] === val) return false;
 
-async function solver(board,row,col){
-
-    if(row==N) return true;
-
-    let nextRow=row;
-    let nextCol=col+1;
-
-    if(col+1==N){
-        nextRow=row+1;
-        nextCol=0;
+  const r1 = row - (row % 2);
+  const c1 = col - (col % 3);
+  for(let i = r1; i < r1 + 2; i++) {
+    for(let j = c1; j < c1 + 3; j++) {
+      if(board[i][j] === val) return false;
     }
+  }
+  return true;
+}
 
-    if(board[row][col]!=0)
-        return solver(board,nextRow,nextCol);
+async function solver(board, row, col) {
+  if(row === N) return true;
 
-    for(let num=1;num<=6;num++){
+  const nextRow = col + 1 === N ? row + 1 : row;
+  const nextCol = col + 1 === N ? 0 : col + 1;
 
-        if(isSafe(board,row,col,num)){
+  if(board[row][col] !== 0) {
+    return solver(board, nextRow, nextCol);
+  }
 
-            board[row][col]=num;
-            setCell(row,col,num);
+  for(let num = 1; num <= 6; num++) {
+    if(!isSolving) return false; // Cancel support
+    if(isSafe(board, row, col, num)) {
+      board[row][col] = num;
+      setCell(row, col, num, true);
+      await sleep(25);
 
-            await sleep(20);
+      if(await solver(board, nextRow, nextCol)) return true;
 
-            if(await solver(board,nextRow,nextCol))
-                return true;
-
-            board[row][col]=0;
-            setCell(row,col,"");
-        }
+      board[row][col] = 0;
+      setCell(row, col, "", false);
+      await sleep(15); // Visual backtracking rhythm
     }
-
-    return false;
+  }
+  return false;
 }
 
-async function solveSudoku(){
+async function solveSudoku() {
+  if(isSolving) return;
+  
+  const board = getBoard();
+  toggleLoading(true);
+  updateStatus("Solving...", "solving");
 
-    let board=getBoard();
+  // Small delay for UX feel
+  await sleep(100);
 
-    if(!(await solver(board,0,0)))
-        alert("No Solution Found");
+  const success = await solver(board, 0, 0);
+  toggleLoading(false);
 
+  if(success) {
+    updateStatus("Puzzle Solved Successfully ✨", "success");
+  } else {
+    updateStatus("No valid solution found. Check inputs.", "error");
+    // Flash error on empty/invalid cells
+    boardElement.querySelectorAll("input").forEach(inp => {
+      if(!inp.value && !isSolving) {
+        inp.classList.add("error-highlight");
+        setTimeout(() => inp.classList.remove("error-highlight"), 800);
+      }
+    });
+  }
 }
-
 </script>
 
 </body>
